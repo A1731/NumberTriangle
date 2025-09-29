@@ -103,34 +103,56 @@ public class NumberTriangle {
      * @return the topmost NumberTriangle object in the NumberTriangle structure read from the specified file
      * @throws IOException may naturally occur if an issue reading the file occurs
      */
-    public static NumberTriangle loadTriangle(String fname) throws IOException {
-        // open the file and get a BufferedReader object whose methods
-        // are more convenient to work with when reading the file contents.
+   public static NumberTriangle loadTriangle(String fname) throws IOException {
+        // 打开资源文件
         InputStream inputStream = NumberTriangle.class.getClassLoader().getResourceAsStream(fname);
+        if (inputStream == null) {
+            throw new FileNotFoundException("Resource not found: " + fname);
+        }
         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
 
-
-        // TODO define any variables that you want to use to store things
-
-        // will need to return the top of the NumberTriangle,
-        // so might want a variable for that.
-        NumberTriangle top = null;
+        NumberTriangle top = null;  // 最上面的节点
+        java.util.List<NumberTriangle> prevRow = null;  // 上一行的节点列表
 
         String line = br.readLine();
         while (line != null) {
+            String raw = line; // 如果你还想打印原始行，可用 raw
+            line = line.trim();
+            if (!line.isEmpty()) {
+                // 1) 解析本行数字
+                String[] toks = line.split("\\s+"); // 任意空白分隔
+                java.util.List<NumberTriangle> currRow = new java.util.ArrayList<>(toks.length);
+                for (String t : toks) {
+                    int val = Integer.parseInt(t);
+                    currRow.add(new NumberTriangle(val));
+                }
 
-            // remove when done; this line is included so running starter code prints the contents of the file
-            System.out.println(line);
+                // 2) 连接上一行与本行
+                if (prevRow != null) {
+                    for (int i = 0; i < prevRow.size(); i++) {
+                        NumberTriangle parent = prevRow.get(i);
+                        parent.setLeft(currRow.get(i));
+                        parent.setRight(currRow.get(i + 1));
+                    }
+                } else {
+                    // 第一行：记录 top
+                    top = currRow.get(0);
+                }
 
-            // TODO process the line
+                // 3) 准备进入下一行
+                prevRow = currRow;
+            }
 
-            //read the next line
+            // 读取下一行
             line = br.readLine();
         }
         br.close();
+
+        if (top == null) {
+            throw new IllegalArgumentException("Empty triangle file: " + fname);
+        }
         return top;
     }
-
     public static void main(String[] args) throws IOException {
 
         NumberTriangle mt = NumberTriangle.loadTriangle("input_tree.txt");
